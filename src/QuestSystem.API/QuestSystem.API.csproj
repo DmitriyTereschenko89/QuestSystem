@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\QuestSystem.Data\QuestSystem.Data.csproj" />
     <ProjectReference Include="..\QuestSystem.Domain\QuestSystem.Domain.csproj" />
+    <ProjectReference Include="..\QuestSystem.Infrastructure\QuestSystem.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

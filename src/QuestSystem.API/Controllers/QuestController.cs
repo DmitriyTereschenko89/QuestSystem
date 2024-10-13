@@ -1,29 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using QuestSystem.Domain.Entities.Quests;
-
-// позволять игрокам:
-//Просматривать доступные квесты.
-//Принимать квесты.
-//Обновлять прогресс выполнения квестов.
-//Завершать квесты и получать награду.
+using QuestSystem.API.Data_Transfer_Objects;
+using QuestSystem.Domain.Abstractions;
+using QuestSystem.Domain.Entities.Quests.Common;
 
 namespace QuestSystem.API.Controllers
 {
     [ApiController]
-    public class QuestController : Controller
+    public class QuestController(IQuestService questService) : Controller
     {
+        private readonly IQuestService _questService = questService;
         [HttpGet]
         [Route("/")]
-        public Task<Quest> GetAvailableQuests(Guid playerId)
+        public async Task<IEnumerable<Quest>> GetAvailableQuests(Guid playerId)
         {
-            throw new NotImplementedException();
+            return await _questService.GetAvailableQuests(playerId);
         }
 
         [HttpPut]
         [Route("/accept")]
-        public Task AcceptQuest(Guid playerId, Guid questId)
+        public async Task AcceptQuest([FromBody] AcceptedDto questDto)
         {
-            throw new NotImplementedException();
+            await _questService.AcceptedQuest(questDto.PlayerId, questDto.QuestId);
         }
 
         [HttpPut]
@@ -35,9 +32,9 @@ namespace QuestSystem.API.Controllers
 
         [HttpPut]
         [Route("/finished")]
-        public Task FinishedQuest(Guid playerId, Guid quesId)
+        public async Task FinishedQuest([FromBody] FinishedDto finishedDto)
         {
-            throw new NotImplementedException();
+            await _questService.FinishedQuest(finishedDto.QuestItemId);
         }
     }
 }

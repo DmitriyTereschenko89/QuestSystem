@@ -1,17 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using QuestSystem.Data.Converters;
+using QuestSystem.Data.Extentions;
 using QuestSystem.Domain.Entities.Player;
-using QuestSystem.Domain.Entities.Quests;
+using QuestSystem.Domain.Entities.Quests.Common;
+using QuestSystem.Domain.Entities.Quests.Conditions;
+using QuestSystem.Domain.Entities.Quests.Requirements;
+using QuestSystem.Domain.Entities.Quests.Rewards;
 
 namespace QuestSystem.Data.Identities
 {
-    public class QuestSystemDbContext(DbContextOptions<QuestSystemDbContext> options) : DbContext(options)
+    public class QuestSystemDbContext : DbContext
     {
+        public QuestSystemDbContext(DbContextOptions<QuestSystemDbContext> options) : base(options)
+        {
+            _ = Database.EnsureCreated();
+        }
+
         public virtual DbSet<Player> Players { get; set; }
         public virtual DbSet<Quest> Quests { get; set; }
         public virtual DbSet<QuestItem> QuestPlayers { get; set; }
-        public virtual DbSet<QuestConditions> QuestConditions { get; set; }
-        public virtual DbSet<QuestRequirements> QuestRequirements { get; set; }
-        public virtual DbSet<QuestReward> QuestReward { get; set; }
+        public virtual DbSet<Conditions> QuestConditions { get; set; }
+        public virtual DbSet<Requirements> QuestRequirements { get; set; }
+        public virtual DbSet<Reward> QuestReward { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             _ = modelBuilder.Entity<Quest>(entity =>
@@ -19,9 +29,15 @@ namespace QuestSystem.Data.Identities
                 _ = entity.HasKey(q => q.Id);
                 _ = entity.Property(q => q.Name).HasMaxLength(500);
                 _ = entity.Property(q => q.Description).HasMaxLength(2000);
-                _ = entity.HasOne(q => q.QuestCondition);
-                _ = entity.HasOne(q => q.QuestRequirements);
-                _ = entity.HasOne(q => q.QuestReward);
+                _ = entity.HasOne(q => q.QuestCondition)
+                            .WithMany()
+                            .HasForeignKey(q => q.ConditionId);
+                _ = entity.HasOne(q => q.QuestRequirements)
+                            .WithMany()
+                            .HasForeignKey(q => q.RequirementId);
+                _ = entity.HasOne(q => q.QuestReward)
+                            .WithMany()
+                            .HasForeignKey(q => q.RewardId);
             });
 
             _ = modelBuilder.Entity<Player>(entity =>
@@ -44,35 +60,36 @@ namespace QuestSystem.Data.Identities
                       .HasForeignKey(e => e.QuestId);
 
                 _ = entity.Property(e => e.QuestStatus).IsRequired();
-                _ = entity.Property(e => e.ProgressQuestCondition).HasMaxLength(500);
+                _ = entity.Property(e => e.ProgressQuestCondition).HasConversion(new ConditionsConverter());
             });
 
-            _ = modelBuilder.Entity<QuestConditions>(entity =>
+            _ = modelBuilder.Entity<Conditions>(entity =>
             {
                 _ = entity.HasKey(e => e.Id);
-                _ = entity.Property(e => e.ConditionName).HasMaxLength(100);
+                _ = entity.Property(e => e.ConditionDescription).HasMaxLength(100);
                 _ = entity.Property(e => e.ConditionCount).IsRequired();
             });
 
-            _ = modelBuilder.Entity<QuestRequirements>(entity =>
+            _ = modelBuilder.Entity<CollectSubjectCondition>().HasBaseType<Conditions>();
+            _ = modelBuilder.Entity<VisitSpecificLocationCondition>().HasBaseType<Conditions>();
+            _ = modelBuilder.Entity<WinMonstersCondition>().HasBaseType<Conditions>();
+
+            _ = modelBuilder.Entity<Requirements>(entity =>
             {
                 _ = entity.HasKey(e => e.Id);
                 _ = entity.Property(e => e.MinimumLevel).IsRequired();
             });
 
-            _ = modelBuilder.Entity<QuestReward>(entity =>
+            _ = modelBuilder.Entity<Reward>(entity =>
             {
                 _ = entity.HasKey(e => e.Id);
             });
 
-            _ = modelBuilder.Entity<Currency>().HasBaseType<QuestReward>();
-            _ = modelBuilder.Entity<Experience>().HasBaseType<QuestReward>();
-            _ = modelBuilder.Entity<Item>().HasBaseType<QuestReward>();
+            _ = modelBuilder.Entity<RewardCurrency>().HasBaseType<Reward>();
+            _ = modelBuilder.Entity<RewardExperience>().HasBaseType<Reward>();
+            _ = modelBuilder.Entity<RewardItem>().HasBaseType<Reward>();
 
-            _ = modelBuilder.Entity<CollectSubjectCondition>().HasBaseType<QuestConditions>();
-            _ = modelBuilder.Entity<VisitSpecificLocationCondition>().HasBaseType<QuestConditions>();
-            _ = modelBuilder.Entity<WinMonstersCondition>().HasBaseType<QuestConditions>();
-
+            modelBuilder.Seed();
             base.OnModelCreating(modelBuilder);
         }
     }

@@ -1,12 +1,21 @@
-﻿using QuestSystem.Domain.Entities.Quests;
+﻿using QuestSystem.Domain.Entities.Quests.Common;
 
 namespace QuestSystem.Domain.Entities.Player
 {
     public class Player
     {
-        private readonly List<QuestItem> _quests = [];
-        public Guid Id { get; private set; }
-        public string Name { get; private set; }
+        private readonly List<QuestItem> _quests;
+        public Player() { }
+        public Player(Guid id, string name, int level)
+        {
+            Id = id;
+            Name = name;
+            Level = level;
+            _quests = [];
+        }
+
+        public Guid Id { get; init; }
+        public string Name { get; init; }
         public int Level { get; private set; }
         public IEnumerable<QuestItem> Quests
         {
@@ -14,16 +23,6 @@ namespace QuestSystem.Domain.Entities.Player
             {
                 return _quests;
             }
-        }
-
-        public void SetName(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentNullException(nameof(name), "Name cannot be null or empty");
-            }
-
-            Name = name;
         }
 
         public void LevelUp()
